@@ -115,6 +115,13 @@ defmodule Plaid.Transactions do
   * `:account_id`                   - Specific account id for which to fetch balances.
   """
   @spec sync(String.t(), options, Plaid.config()) :: {:ok, SyncResponse.t()} | {:error, Plaid.Error.t()}
+  when options: %{
+               optional(:cursor) => String.t(),
+               optional(:count) => integer(),
+               optional(:include_original_description) => boolean(),
+               optional(:days_requested) => integer(),
+               optional(:account_id) => String.t(),
+             }
   def sync(access_token, options \\ %{}, config) do
     params_payload = Map.take(options, [:cursor, :count])
     options_payload = Map.take(options, [:include_original_description, :days_requested, :account_id])
