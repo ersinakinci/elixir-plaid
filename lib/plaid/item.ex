@@ -14,9 +14,11 @@ defmodule Plaid.Item do
           error: Plaid.Error.t() | nil,
           has_perpetual_otp: boolean(),
           institution_id: String.t() | nil,
+          institution_name: String.t() | nil,
           item_id: String.t(),
           update_type: String.t(),
-          webhook: String.t() | nil
+          webhook: String.t() | nil,
+          auth_method: String.t() | nil
         }
 
   defstruct [
@@ -26,9 +28,11 @@ defmodule Plaid.Item do
     :has_perpetual_otp,
     :error,
     :institution_id,
+    :institution_name,
     :item_id,
     :update_type,
-    :webhook
+    :webhook,
+    :auth_method
   ]
 
   @impl true
@@ -40,9 +44,11 @@ defmodule Plaid.Item do
       error: Castable.cast(Plaid.Error, generic_map["error"]),
       has_perpetual_otp: generic_map["has_perpetual_otp"],
       institution_id: generic_map["institution_id"],
+      institution_name: generic_map["institution_name"],
       item_id: generic_map["item_id"],
       update_type: generic_map["update_type"],
-      webhook: generic_map["webhook"]
+      webhook: generic_map["webhook"],
+      auth_method: generic_map["auth_method"]
     }
   end
 
@@ -156,7 +162,7 @@ defmodule Plaid.Item do
   Update a webhook for an access_token.
 
   Does a `POST /item/webhook/update` call which is used to update webhook
-  for a particular access_token.
+  for a particular access_token. 
 
   ## Params
 
@@ -275,7 +281,7 @@ defmodule Plaid.Item do
   @doc """
   Invalidate an access token.
 
-  Does a `POST /item/access_token/invalidate` call which rotates an access token
+  Does a `POST /item/access_token/invalidate` call which rotates an access token 
   for an item. Immediately invalidating it and returning a new access token.
 
   ## Params
