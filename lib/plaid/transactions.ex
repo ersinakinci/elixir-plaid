@@ -3,6 +3,56 @@ defmodule Plaid.Transactions do
   [Plaid Transactions API](https://plaid.com/docs/api/transactions) calls and schema.
   """
 
+  defmodule SyncResponse do
+    @moduledoc """
+    [Plaid API /transactions/sync response schema.](https://plaid.com/docs/api/products/transactions/#transactionssync)
+    """
+
+    @behaviour Castable
+
+    alias Plaid.{Castable, Account, Transactions}
+
+    @type t :: %__MODULE__{
+            transactions_update_status: binary(),
+            accounts: [Account.t()],
+            added: [Transactions.Transaction.t()],
+            modified: [Transactions.Transaction.t()],
+            removed: [Transactions.Transaction.t()],
+            next_cursor: binary(),
+            has_more: boolean(),
+            request_id: String.t(),
+            access_token: String.t() | nil
+          }
+
+    defstruct [
+      :transactions_update_status,
+      :accounts,
+      :added,
+      :modified,
+      :removed,
+      :next_cursor,
+      :has_more,
+      :request_id,
+      :access_token
+    ]
+
+    @impl true
+    def cast(generic_map) do
+      %__MODULE__{
+        transactions_update_status: generic_map["transactions_update_status"],
+        accounts: Castable.cast_list(Account, generic_map["accounts"]),
+        added: Castable.cast_list(Transactions.SyncedTransaction, generic_map["added"]),
+        modified: Castable.cast_list(Transactions.SyncedTransaction, generic_map["modified"]),
+        removed:
+          Castable.cast_list(Transactions.RemovedSyncedTransaction, generic_map["removed"]),
+        next_cursor: generic_map["next_cursor"],
+        has_more: generic_map["has_more"],
+        request_id: generic_map["request_id"],
+        access_token: generic_map["access_token"]
+      }
+    end
+  end
+
   defmodule GetResponse do
     @moduledoc """
     [Plaid API /transactions/get response schema.](https://plaid.com/docs/api/transactions)
@@ -41,6 +91,41 @@ defmodule Plaid.Transactions do
         request_id: generic_map["request_id"]
       }
     end
+  end
+
+  @doc """
+  Sync the latest transactions.
+
+  Does a `POST /transactions/sync` call, which gives you details on transactions
+  that have been added, modified, and removed relative to the update indicated
+  by `cursor`.
+
+  Params:
+  * `access_token` - Token to fetch transactions for.
+
+  Options:
+  * `:cursor`                       - Opaque token pointing to an update, after which all newly
+                                      added, modified, and removed transactions will be returned.
+  * `:count`                        - Number of transactions to pull (min 1, max 500, default 100).
+  * `:include_original_description` - Include the raw unparsed transaction description from the
+                                      financial institution.
+  * `:days_requested`               - Maximum number of days of transaction history (only applies
+                                      to calls for Items where the Transactions product has not
+                                      already been initialized).
+  * `:account_id`                   - Specific account id for which to fetch balances.
+  """
+  @spec sync(String.t(), options, Plaid.config()) :: {:ok, SyncResponse.t()} | {:error, Plaid.Error.t()}
+  def sync(access_token, options \\ %{}, config) do
+    params_payload = Map.take(options, [:cursor, :count])
+    options_payload = Map.take(options, [:include_original_description, :days_requested, :account_id])
+    payload = params_payload |> Map.put(:options, options_payload)
+
+    Plaid.Client.call(
+             "/transactions/sync",
+             payload,
+             Plaid.Transactions.SyncResponse,
+             config
+           )
   end
 
   @doc """
