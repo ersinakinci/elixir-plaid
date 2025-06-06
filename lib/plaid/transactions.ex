@@ -125,7 +125,9 @@ defmodule Plaid.Transactions do
   def sync(access_token, options \\ %{}, config) do
     params_payload = Map.take(options, [:cursor, :count])
     options_payload = Map.take(options, [:include_original_description, :days_requested, :account_id])
-    payload = params_payload |> Map.put(:options, options_payload)
+    payload = params_payload
+      |> Map.put(:options, options_payload)
+      |> Map.put(:access_token, access_token)
 
     Plaid.Client.call(
              "/transactions/sync",
